@@ -24,16 +24,17 @@ const GameView = () => {
   const { slug } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // API
+  const paramsObj = useMemo(() => Object.fromEntries(searchParams.entries()), [searchParams])
+
   const { data: response, isLoading } = useQuery({
-    queryKey: ['game-players', slug, Object.fromEntries(searchParams.entries())],
-    queryFn: () =>
-      api
-        .get(`/admin/games/${slug}/players`, {
-          params: { ...Object.fromEntries(searchParams.entries()) },
-        })
-        .then((res) => res.data),
-    enabled: !!slug,
+    queryKey: ['game-players', slug, paramsObj],
+    queryFn: async () => {
+      const res = await api.get(`/admin/games/${slug}/players`, {
+        params: paramsObj,
+      })
+      return res.data
+    },
+    enabled: Boolean(slug),
   })
 
   const players = response?.data || []
