@@ -195,49 +195,51 @@ const GameView = () => {
             </CTable>
 
             {/* PAGINATION */}
-            <div className="d-flex justify-content-end mt-3">
-              <CPagination>
-                <CPaginationItem
-                  disabled={meta.page <= 1}
-                  onClick={() => handlePageChange(meta.page - 1)}
-                >
-                  Prev
-                </CPaginationItem>
-
-                {meta.page > 3 && (
-                  <>
-                    <CPaginationItem onClick={() => handlePageChange(1)}>1</CPaginationItem>
-                    <CPaginationItem disabled>...</CPaginationItem>
-                  </>
-                )}
-
-                {getPageNumbers(meta.page, meta.totalPages).map((page) => (
+            {!isFetching && (
+              <div className="d-flex justify-content-end mt-3">
+                <CPagination>
                   <CPaginationItem
-                    key={page}
-                    active={meta.page === page}
-                    onClick={() => handlePageChange(page)}
+                    disabled={meta.page <= 1}
+                    onClick={() => handlePageChange(meta.page - 1)}
                   >
-                    {page}
+                    Prev
                   </CPaginationItem>
-                ))}
 
-                {meta.page < meta.totalPages - 2 && (
-                  <>
-                    <CPaginationItem disabled>...</CPaginationItem>
-                    <CPaginationItem onClick={() => handlePageChange(meta.totalPages)}>
-                      {meta.totalPages}
+                  {meta.page > 3 && (
+                    <>
+                      <CPaginationItem onClick={() => handlePageChange(1)}>1</CPaginationItem>
+                      <CPaginationItem disabled>...</CPaginationItem>
+                    </>
+                  )}
+
+                  {getPageNumbers(meta.page, meta.totalPages).map((page) => (
+                    <CPaginationItem
+                      key={page}
+                      active={meta.page === page}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
                     </CPaginationItem>
-                  </>
-                )}
+                  ))}
 
-                <CPaginationItem
-                  disabled={meta.page >= meta.totalPages}
-                  onClick={() => handlePageChange(meta.page + 1)}
-                >
-                  Next
-                </CPaginationItem>
-              </CPagination>
-            </div>
+                  {meta.page < meta.totalPages - 2 && (
+                    <>
+                      <CPaginationItem disabled>...</CPaginationItem>
+                      <CPaginationItem onClick={() => handlePageChange(meta.totalPages)}>
+                        {meta.totalPages}
+                      </CPaginationItem>
+                    </>
+                  )}
+
+                  <CPaginationItem
+                    disabled={meta.page >= meta.totalPages}
+                    onClick={() => handlePageChange(meta.page + 1)}
+                  >
+                    Next
+                  </CPaginationItem>
+                </CPagination>
+              </div>
+            )}
           </CCardBody>
         </CCard>
       </CCol>
