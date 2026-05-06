@@ -25,11 +25,11 @@ import {
 import { useMemo, useState, useEffect } from 'react'
 
 import { useParams, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { formatDateTime } from '../../lib/format'
 import CIcon from '@coreui/icons-react'
-import { cilSearch } from '@coreui/icons'
+import { cilPlus, cilSearch } from '@coreui/icons'
 
 const GameView = () => {
   const { slug } = useParams()
@@ -44,6 +44,50 @@ const GameView = () => {
     account: '',
     nickname: '',
   })
+
+  const [addVisible, setAddVisible] = useState(false)
+
+  const [newPlayer, setNewPlayer] = useState({
+    username: '',
+    nickname: '',
+    password: '',
+    money: '',
+  })
+
+  const handleAddChange = (e) => {
+    const { name, value } = e.target
+    setNewPlayer((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const addPlayerMutation = useMutation({
+    mutationFn: (newPlayer) => api.post(`/admin/games/${slug}/player`, newPlayer),
+
+    onSuccess: () => {
+      // close modal
+      setAddVisible(false)
+
+      // reset form
+      setNewPlayer({
+        username: '',
+        nickname: '',
+        password: '',
+        money: '',
+      })
+
+      // refresh players list (better than refetch)
+      queryClient.invalidateQueries({
+        queryKey: ['game-players', slug],
+      })
+    },
+
+    onError: (err) => {
+      console.error(err)
+    },
+  })
+
+  const handleAddPlayer = () => {
+    addPlayerMutation.mutate(newPlayer)
+  }
 
   // sync filters with URL
   useEffect(() => {
@@ -130,15 +174,22 @@ const GameView = () => {
           </CCardHeader>
 
           <CCardBody>
-            <CButton
-              color="secondary"
-              variant="outline"
-              className="mb-3 d-flex align-items-center gap-2"
-              onClick={() => setVisible(true)}
-            >
-              <CIcon icon={cilSearch} size="sm" />
-              Search
-            </CButton>
+            <div className="d-flex align-items-center gap-2 mb-3">
+              <CButton
+                color="secondary"
+                variant="outline"
+                className="d-flex align-items-center gap-2"
+                onClick={() => setVisible(true)}
+              >
+                <CIcon icon={cilSearch} />
+                Search
+              </CButton>
+
+              <CButton color="primary" onClick={() => setAddVisible(true)}>
+                <CIcon icon={cilPlus} className="me-2" />
+                Add Player
+              </CButton>
+            </div>
 
             <CTable bordered hover responsive align="middle">
               <CTableHead>
@@ -281,6 +332,64 @@ const GameView = () => {
           </CButton>
           <CButton color="primary" onClick={applyFilters}>
             Apply
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
+      {/* ADD PLAYER MODAL */}
+      <CModal visible={addVisible} onClose={() => setAddVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>Add Player</CModalTitle>
+        </CModalHeader>
+
+        <CModalBody>
+          <CFormInput
+            label="Username"
+            name="username"
+            value={newPlayer.username}
+            onChange={handleAddChange}
+            className="mb-3"
+          />
+
+          <CFormInput
+            label="Nickname"
+            name="nickname"
+            value={newPlayer.nickname}
+            onChange={handleAddChange}
+            className="mb-3"
+          />
+
+          <CFormInput
+            label="Password"
+            type="password"
+            name="password"
+            value={newPlayer.password}
+            onChange={handleAddChange}
+            className="mb-3"
+          />
+
+          <CFormInput
+            label="Money"
+            type="number"
+            name="money"
+            value={newPlayer.money}
+            onChange={handleAddChange}
+          />
+        </CModalBody>
+
+        <CModalFooter>
+          <CButton color="secondary" onClick={() => setAddVisible(false)}>
+            Cancel
+          </CButton>
+          <CButton color="primary" onClick={handleAddPlayer} disabled={addPlayerMutation.isPending}>
+            {addPlayerMutation.isPending ? (
+              <>
+                <CSpinner size="sm" className="me-2" />
+                Creating...
+              </>
+            ) : (
+              'Create'
+            )}
           </CButton>
         </CModalFooter>
       </CModal>
