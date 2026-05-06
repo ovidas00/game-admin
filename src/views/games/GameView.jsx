@@ -13,21 +13,52 @@ import {
   CPagination,
   CPaginationItem,
   CBadge,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
+  CFormInput,
+  CButton,
+  CSpinner,
 } from '@coreui/react'
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { formatDateTime } from '../../lib/format'
+import CIcon from '@coreui/icons-react'
+import { cilSearch } from '@coreui/icons'
 
 const GameView = () => {
   const { slug } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
 
+  // modal state
+  const [visible, setVisible] = useState(false)
+
+  // filters state
+  const [filters, setFilters] = useState({
+    id: '',
+    account: '',
+    nickname: '',
+  })
+
+  // sync filters with URL
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      setFilters({
+        id: searchParams.get('id') || '',
+        account: searchParams.get('account') || '',
+        nickname: searchParams.get('nickname') || '',
+      })
+    })
+  }, [searchParams])
+
   const paramsObj = useMemo(() => Object.fromEntries(searchParams.entries()), [searchParams])
 
-  const { data: response, isLoading } = useQuery({
+  const { data: response, isFetching } = useQuery({
     queryKey: ['game-players', slug, paramsObj],
     queryFn: async () => {
       const res = await api.get(`/admin/games/${slug}/players`, {
@@ -44,6 +75,7 @@ const GameView = () => {
   // pagination
   const handlePageChange = (newPage) => {
     setSearchParams({
+      ...paramsObj,
       page: String(newPage),
     })
   }
@@ -60,19 +92,58 @@ const GameView = () => {
     return range
   }
 
+  // input change
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFilters((prev) => ({ ...prev, [name]: value }))
+  }
+
+  // apply filters
+  const applyFilters = () => {
+    const newParams = {
+      ...paramsObj,
+      ...filters,
+      page: '1',
+    }
+
+    Object.keys(newParams).forEach((key) => {
+      if (!newParams[key]) delete newParams[key]
+    })
+
+    setSearchParams(newParams)
+    setVisible(false)
+  }
+
+  // reset filters
+  const resetFilters = () => {
+    setFilters({ id: '', account: '', nickname: '' })
+    setSearchParams({ page: '1' })
+    setVisible(false)
+  }
+
   return (
     <CRow>
       <CCol>
         <CCard className="mb-4">
-          <CCardHeader>
+          <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Game Players</strong>
           </CCardHeader>
 
           <CCardBody>
+            <CButton
+              color="secondary"
+              variant="outline"
+              className="mb-3 d-flex align-items-center gap-2"
+              onClick={() => setVisible(true)}
+            >
+              <CIcon icon={cilSearch} size="sm" />
+              Search
+            </CButton>
+
             <CTable bordered hover responsive align="middle">
               <CTableHead>
                 <CTableRow>
-                  <CTableHeaderCell>#</CTableHeaderCell>
+                  <CTableHeaderCell>ID</CTableHeaderCell>
                   <CTableHeaderCell>Account</CTableHeaderCell>
                   <CTableHeaderCell>Nickname</CTableHeaderCell>
                   <CTableHeaderCell>Score</CTableHeaderCell>
@@ -85,46 +156,35 @@ const GameView = () => {
               </CTableHead>
 
               <CTableBody>
-                {players.map((p, index) => (
-                  <CTableRow key={p.id}>
-                    {/* # */}
-                    <CTableDataCell>
-                      {(meta.page - 1) * (response?.limit || players.length) + index + 1}
-                    </CTableDataCell>
-
-                    {/* Account */}
-                    <CTableDataCell>{p.Account}</CTableDataCell>
-
-                    {/* Nickname */}
-                    <CTableDataCell>{p.nickname}</CTableDataCell>
-
-                    {/* Score */}
-                    <CTableDataCell>{p.score}</CTableDataCell>
-
-                    {/* Login Count */}
-                    <CTableDataCell>{p.LoginCount}</CTableDataCell>
-
-                    {/* Last Login */}
-                    <CTableDataCell>{p.lasttime}</CTableDataCell>
-
-                    {/* IP */}
-                    <CTableDataCell>{p.loginip}</CTableDataCell>
-
-                    {/* Status */}
-                    <CTableDataCell>
-                      <CBadge color={p.account_using === 1 ? 'success' : 'secondary'}>
-                        {p.account_using === 1 ? 'Active' : 'Inactive'}
-                      </CBadge>
-                    </CTableDataCell>
-
-                    {/* Added */}
-                    <CTableDataCell className="text-nowrap">
-                      {formatDateTime(p.AddDate)}
+                {isFetching ? (
+                  <CTableRow>
+                    <CTableDataCell colSpan={9} className="text-center py-5">
+                      <CSpinner color="primary" variant="grow" />
                     </CTableDataCell>
                   </CTableRow>
-                ))}
+                ) : players.length > 0 ? (
+                  players.map((p) => (
+                    <CTableRow key={p.id}>
+                      <CTableDataCell>{p.id}</CTableDataCell>
+                      <CTableDataCell>{p.Account}</CTableDataCell>
+                      <CTableDataCell>{p.nickname}</CTableDataCell>
+                      <CTableDataCell>{p.score}</CTableDataCell>
+                      <CTableDataCell>{p.LoginCount}</CTableDataCell>
+                      <CTableDataCell>{p.lasttime}</CTableDataCell>
+                      <CTableDataCell>{p.loginip}</CTableDataCell>
 
-                {!isLoading && players.length === 0 && (
+                      <CTableDataCell>
+                        <CBadge color={p.account_using === 1 ? 'success' : 'secondary'}>
+                          {p.account_using === 1 ? 'Active' : 'Inactive'}
+                        </CBadge>
+                      </CTableDataCell>
+
+                      <CTableDataCell className="text-nowrap">
+                        {formatDateTime(p.AddDate)}
+                      </CTableDataCell>
+                    </CTableRow>
+                  ))
+                ) : (
                   <CTableRow>
                     <CTableDataCell colSpan={9} className="text-center text-muted">
                       No players found
@@ -144,7 +204,6 @@ const GameView = () => {
                   Prev
                 </CPaginationItem>
 
-                {/* First page */}
                 {meta.page > 3 && (
                   <>
                     <CPaginationItem onClick={() => handlePageChange(1)}>1</CPaginationItem>
@@ -152,7 +211,6 @@ const GameView = () => {
                   </>
                 )}
 
-                {/* Dynamic window */}
                 {getPageNumbers(meta.page, meta.totalPages).map((page) => (
                   <CPaginationItem
                     key={page}
@@ -163,7 +221,6 @@ const GameView = () => {
                   </CPaginationItem>
                 ))}
 
-                {/* Last page */}
                 {meta.page < meta.totalPages - 2 && (
                   <>
                     <CPaginationItem disabled>...</CPaginationItem>
@@ -184,6 +241,47 @@ const GameView = () => {
           </CCardBody>
         </CCard>
       </CCol>
+
+      {/* SEARCH MODAL */}
+      <CModal visible={visible} onClose={() => setVisible(false)}>
+        <CModalHeader>
+          <CModalTitle>Search Players</CModalTitle>
+        </CModalHeader>
+
+        <CModalBody>
+          <CFormInput
+            label="ID"
+            name="id"
+            value={filters.id}
+            onChange={handleChange}
+            className="mb-3"
+          />
+
+          <CFormInput
+            label="Account"
+            name="account"
+            value={filters.account}
+            onChange={handleChange}
+            className="mb-3"
+          />
+
+          <CFormInput
+            label="Nickname"
+            name="nickname"
+            value={filters.nickname}
+            onChange={handleChange}
+          />
+        </CModalBody>
+
+        <CModalFooter>
+          <CButton color="secondary" onClick={resetFilters}>
+            Reset
+          </CButton>
+          <CButton color="primary" onClick={applyFilters}>
+            Apply
+          </CButton>
+        </CModalFooter>
+      </CModal>
     </CRow>
   )
 }
