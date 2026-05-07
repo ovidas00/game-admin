@@ -14,6 +14,7 @@ import {
   CButton,
   CAvatar,
   CButtonGroup,
+  CSpinner,
 } from '@coreui/react'
 
 import { useQuery } from '@tanstack/react-query'
@@ -26,7 +27,7 @@ import { cilPencil } from '@coreui/icons'
 const Games = () => {
   const navigate = useNavigate()
 
-  const { data: games = [], isLoading } = useQuery({
+  const { data: games = [], isFetching } = useQuery({
     queryKey: ['games'],
     queryFn: () => api.get('/admin/games').then((res) => res.data),
   })
@@ -55,68 +56,68 @@ const Games = () => {
               </CTableHead>
 
               <CTableBody>
-                {games.map((game, index) => (
-                  <CTableRow key={game.id}>
-                    {/* # */}
-                    <CTableDataCell>{index + 1}</CTableDataCell>
-
-                    {/* Game */}
-                    <CTableDataCell>
-                      <div className="d-flex align-items-center gap-3">
-                        <img
-                          src={game.image}
-                          alt={game.name}
-                          style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                          className="rounded bg-light"
-                        />
-                        <div className="fw-semibold">{game.name}</div>
-                      </div>
-                    </CTableDataCell>
-
-                    {/* Category */}
-                    <CTableDataCell>{game.category}</CTableDataCell>
-
-                    {/* Slug */}
-                    <CTableDataCell>{game.slug}</CTableDataCell>
-
-                    {/* Badge */}
-                    <CTableDataCell>
-                      {game.badge ? <CBadge color="info">{game.badge}</CBadge> : '-'}
-                    </CTableDataCell>
-
-                    {/* Featured */}
-                    <CTableDataCell>
-                      <CBadge color={game.isFeatured ? 'success' : 'secondary'}>
-                        {game.isFeatured ? 'Yes' : 'No'}
-                      </CBadge>
-                    </CTableDataCell>
-
-                    {/* Created */}
-                    <CTableDataCell className="text-nowrap">
-                      {formatDateTime(game.createdAt)}
-                    </CTableDataCell>
-
-                    {/* Actions */}
-                    <CTableDataCell>
-                      <CButtonGroup size="sm">
-                        <CButton
-                          color="secondary"
-                          variant="outline"
-                          onClick={() => navigate(`/games/${game.slug}/edit`)}
-                        >
-                          <CIcon icon={cilPencil} size="sm" className="me-1" />
-                          Edit
-                        </CButton>
-
-                        <CButton color="primary" onClick={() => navigate(`/games/${game.slug}`)}>
-                          View
-                        </CButton>
-                      </CButtonGroup>
+                {isFetching && (
+                  <CTableRow>
+                    <CTableDataCell colSpan={8} className="text-center py-4">
+                      <CSpinner color="primary" />
                     </CTableDataCell>
                   </CTableRow>
-                ))}
+                )}
 
-                {!isLoading && games.length === 0 && (
+                {!isFetching &&
+                  games.map((game, index) => (
+                    <CTableRow key={game.id}>
+                      <CTableDataCell>{index + 1}</CTableDataCell>
+
+                      <CTableDataCell>
+                        <div className="d-flex align-items-center gap-3">
+                          <img
+                            src={game.image}
+                            alt={game.name}
+                            style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                            className="rounded bg-light"
+                          />
+                          <div className="fw-semibold">{game.name}</div>
+                        </div>
+                      </CTableDataCell>
+
+                      <CTableDataCell>{game.category}</CTableDataCell>
+                      <CTableDataCell>{game.slug}</CTableDataCell>
+
+                      <CTableDataCell>
+                        {game.badge ? <CBadge color="info">{game.badge}</CBadge> : '-'}
+                      </CTableDataCell>
+
+                      <CTableDataCell>
+                        <CBadge color={game.isFeatured ? 'success' : 'secondary'}>
+                          {game.isFeatured ? 'Yes' : 'No'}
+                        </CBadge>
+                      </CTableDataCell>
+
+                      <CTableDataCell className="text-nowrap">
+                        {formatDateTime(game.createdAt)}
+                      </CTableDataCell>
+
+                      <CTableDataCell>
+                        <CButtonGroup size="sm">
+                          <CButton
+                            color="secondary"
+                            variant="outline"
+                            onClick={() => navigate(`/games/${game.slug}/edit`)}
+                          >
+                            <CIcon icon={cilPencil} size="sm" className="me-1" />
+                            Edit
+                          </CButton>
+
+                          <CButton color="primary" onClick={() => navigate(`/games/${game.slug}`)}>
+                            View
+                          </CButton>
+                        </CButtonGroup>
+                      </CTableDataCell>
+                    </CTableRow>
+                  ))}
+
+                {!isFetching && games.length === 0 && (
                   <CTableRow>
                     <CTableDataCell colSpan={8} className="text-center text-muted">
                       No games found
