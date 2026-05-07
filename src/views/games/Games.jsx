@@ -13,12 +13,15 @@ import {
   CBadge,
   CButton,
   CAvatar,
+  CButtonGroup,
 } from '@coreui/react'
 
 import { useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { formatDateTime } from '../../lib/format'
 import { useNavigate } from 'react-router-dom'
+import CIcon from '@coreui/icons-react'
+import { cilPencil } from '@coreui/icons'
 
 const Games = () => {
   const navigate = useNavigate()
@@ -37,7 +40,7 @@ const Games = () => {
           </CCardHeader>
 
           <CCardBody>
-            <CTable bordered hover responsive align="middle">
+            <CTable striped hover responsive align="middle">
               <CTableHead>
                 <CTableRow>
                   <CTableHeaderCell>#</CTableHeaderCell>
@@ -60,7 +63,12 @@ const Games = () => {
                     {/* Game */}
                     <CTableDataCell>
                       <div className="d-flex align-items-center gap-3">
-                        <CAvatar src={game.image} size="md" className="rounded" />
+                        <img
+                          src={game.image}
+                          alt={game.name}
+                          style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                          className="rounded bg-light"
+                        />
                         <div className="fw-semibold">{game.name}</div>
                       </div>
                     </CTableDataCell>
@@ -90,13 +98,20 @@ const Games = () => {
 
                     {/* Actions */}
                     <CTableDataCell>
-                      <CButton
-                        size="sm"
-                        color="primary"
-                        onClick={() => navigate(`/games/${game.slug}`)}
-                      >
-                        View
-                      </CButton>
+                      <CButtonGroup size="sm">
+                        <CButton
+                          color="secondary"
+                          variant="outline"
+                          onClick={() => navigate(`/games/${game.slug}/edit`)}
+                        >
+                          <CIcon icon={cilPencil} size="sm" className="me-1" />
+                          Edit
+                        </CButton>
+
+                        <CButton color="primary" onClick={() => navigate(`/games/${game.slug}`)}>
+                          View
+                        </CButton>
+                      </CButtonGroup>
                     </CTableDataCell>
                   </CTableRow>
                 ))}
