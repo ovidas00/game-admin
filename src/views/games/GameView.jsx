@@ -222,6 +222,7 @@ const GameView = () => {
               <div className="d-flex justify-content-end mt-3">
                 <CPagination>
                   <CPaginationItem
+                    style={{ cursor: 'pointer' }}
                     disabled={meta.page <= 1}
                     onClick={() => handlePageChange(meta.page - 1)}
                   >
@@ -231,6 +232,7 @@ const GameView = () => {
                   {getPageNumbers(meta.page, meta.totalPages).map((page) => (
                     <CPaginationItem
                       key={page}
+                      style={{ cursor: 'pointer' }}
                       active={meta.page === page}
                       onClick={() => handlePageChange(page)}
                     >
@@ -239,6 +241,7 @@ const GameView = () => {
                   ))}
 
                   <CPaginationItem
+                    style={{ cursor: 'pointer' }}
                     disabled={meta.page >= meta.totalPages}
                     onClick={() => handlePageChange(meta.page + 1)}
                   >
